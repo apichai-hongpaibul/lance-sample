@@ -1,0 +1,6 @@
+report.html
+results.json
+__pycache__/
+*.pyc
+.venv/
+.superpowers/
