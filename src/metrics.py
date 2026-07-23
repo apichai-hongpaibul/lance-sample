@@ -26,19 +26,24 @@ class BenchmarkTimer:
 
 
 class MemoryTracker:
-    """Context manager for peak memory tracking via tracemalloc."""
+    """Context manager for peak memory tracking via RSS (psutil).
+
+    Uses process RSS instead of tracemalloc to avoid conflicts with
+    C++ extensions like XGBoost that manage their own memory.
+    """
 
     def __init__(self):
         self.peak_mb: float = 0.0
+        self._baseline_mb: float = 0.0
+        self._process = psutil.Process()
 
     def __enter__(self):
-        tracemalloc.start()
+        self._baseline_mb = self._process.memory_info().rss / (1024 * 1024)
         return self
 
     def __exit__(self, *exc):
-        _, peak = tracemalloc.get_traced_memory()
-        tracemalloc.stop()
-        self.peak_mb = peak / (1024 * 1024)
+        current = self._process.memory_info().rss / (1024 * 1024) - self._baseline_mb
+        self.peak_mb = max(current, 0.0)
         return False
 
 

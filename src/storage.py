@@ -28,6 +28,25 @@ def ensure_bucket(settings: Settings) -> None:
         fs.mkdir(settings.bucket_name)
 
 
+def _clean_s3_path(fs: s3fs.S3FileSystem, s3_path: str, settings: Settings) -> None:
+    """Remove all objects under an S3 path prefix using boto3."""
+    import boto3
+
+    s3 = boto3.client(
+        "s3",
+        endpoint_url=settings.minio_endpoint,
+        aws_access_key_id=settings.minio_access_key,
+        aws_secret_access_key=settings.minio_secret_key,
+    )
+    paginator = s3.get_paginator("list_objects_v2")
+    try:
+        for page in paginator.paginate(Bucket=settings.bucket_name, Prefix=s3_path):
+            for obj in page.get("Contents", []):
+                s3.delete_object(Bucket=settings.bucket_name, Key=obj["Key"])
+    except Exception:
+        pass
+
+
 def write_parquet_to_minio(
     table: pa.Table,
     path: str,
@@ -38,6 +57,9 @@ def write_parquet_to_minio(
     fs = _get_s3fs(settings)
     # Strip s3:// prefix for s3fs
     s3_path = path.replace("s3://", "")
+
+    # Clean existing data to prevent accumulation
+    _clean_s3_path(fs, s3_path, settings)
 
     if partition_col and partition_col in table.column_names:
         pq.write_to_dataset(

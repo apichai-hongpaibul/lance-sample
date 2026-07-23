@@ -3,7 +3,7 @@ name = "lance-parquet-benchmark"
 version = "0.1.0"
 requires-python = ">=3.11"
 dependencies = [
-    "lance>=0.20",
+    "pylance>=0.20",
     "pyarrow>=17.0",
     "xgboost>=2.1",
     "torch>=2.3",
