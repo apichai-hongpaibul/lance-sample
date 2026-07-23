@@ -242,6 +242,21 @@ def main() -> None:
     all_results = {
         "environment": _get_environment_info(),
         "file_sizes": file_sizes,
+        "data_scale": {
+            "decision_model": {
+                "rows": settings.total_decision_rows,
+                "columns": decision_table.num_columns,
+            },
+            "volume_model": {
+                "rows": settings.total_volume_rows,
+                "columns": volume_table.num_columns,
+            },
+            "_scale": (
+                f"{settings.num_sites} sites \u00d7 {settings.num_tanks_per_site} tanks "
+                f"\u00d7 {settings.num_days} days"
+                f" (\u00d7 24 hours for Volume)"
+            ),
+        },
         "access_patterns": {
             "random_access": {
                 "lance": _summarize_results(lance_ra),

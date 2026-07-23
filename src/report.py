@@ -71,7 +71,7 @@ def _access_pattern_chart(results: dict) -> str:
         template="plotly_dark",
         height=400,
     )
-    return fig.to_html(full_html=False, include_plotlyjs=False)
+    return fig.to_html(full_html=False, include_plotlyjs=True)
 
 
 def _memory_chart(results: dict) -> str:
@@ -222,6 +222,39 @@ def _environment_section(results: dict) -> str:
     """
 
 
+def _data_scale_section(results: dict) -> str:
+    """Generate data scale info section."""
+    ds = results.get("data_scale")
+    if not ds:
+        return ""
+    rows = ""
+    for name, info in ds.items():
+        label = name.replace("_", " ").title()
+        rows += (
+            f'<tr><td style="padding: 10px;">{label}</td>'
+            f'<td style="padding: 10px; text-align: right;">{info.get("rows", "N/A"):,}</td>'
+            f'<td style="padding: 10px; text-align: right;">{info.get("columns", "N/A")}</td></tr>'
+        )
+    scale_str = ds.get("_scale", "")
+    return f"""
+    <div style="margin: 20px 0; padding: 20px; background: #1e1e2e;
+                border-radius: 8px; color: #ccc;">
+        <h3>Data Scale</h3>
+        <table style="width: 100%; border-collapse: collapse; color: #ccc;">
+            <thead>
+                <tr style="border-bottom: 2px solid #4ecdc4;">
+                    <th style="padding: 10px; text-align: left;">Dataset</th>
+                    <th style="padding: 10px; text-align: right;">Rows</th>
+                    <th style="padding: 10px; text-align: right;">Columns</th>
+                </tr>
+            </thead>
+            <tbody>{rows}</tbody>
+        </table>
+        {"<p style='color: #666; font-size: 0.85em; margin-top: 10px;'>" + scale_str + "</p>" if scale_str else ""}
+    </div>
+    """
+
+
 def generate_report(results: dict, output_path: str = "report.html") -> None:
     """Generate a self-contained HTML report with Plotly charts.
 
@@ -229,20 +262,12 @@ def generate_report(results: dict, output_path: str = "report.html") -> None:
         results: Full benchmark results dict.
         output_path: Path to write the HTML file.
     """
-    import plotly
-
-    plotly_cdn = (
-        f'<script src="https://cdn.plot.ly/plotly-{plotly.__version__}.min.js">'
-        "</script>"
-    )
-
     html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lance vs Parquet Benchmark Report</title>
-    {plotly_cdn}
     <style>
         body {{
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -277,11 +302,12 @@ def generate_report(results: dict, output_path: str = "report.html") -> None:
     <div class="chart-container">{_training_breakdown_chart(results)}</div>
 
     {_storage_table(results)}
+    {_data_scale_section(results)}
     {_environment_section(results)}
 </body>
 </html>"""
 
-    with open(output_path, "w") as f:
+    with open(output_path, "w", encoding="utf-8") as f:
         f.write(html)
 
 

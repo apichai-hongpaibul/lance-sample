@@ -20,7 +20,7 @@ class Settings:
     parquet_volume_path: str = "s3://benchmark/parquet/volume"
 
     # Data scale
-    num_sites: int = 500
+    num_sites: int = 100
     num_tanks_per_site: int = 3
     num_days: int = 365
     seed: int = 42
